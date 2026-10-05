@@ -1,45 +1,240 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Notes</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
-        textarea { width: 100%; height: 150px; padding: 10px; font-size: 14px; }
-        button { background: #2ea44f; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 6px; margin-top: 10px; }
-        #resultado { margin-top: 20px; font-weight: bold; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Notes - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> tailwind.config = { darkMode: 'class' } </script>
 </head>
-<body>
-    <h2>Adicionar Informação</h2>
-    <textarea id="entrada" placeholder="Cole seu texto, comando ou credencial aqui..."></textarea><br>
-    <button onclick="salvarDado()">Salvar e Identificar</button>
-    <div id="resultado"></div>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <div class="max-w-4xl mx-auto p-6">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-indigo-400">Smart Notes</h1>
+            <div class="space-x-2">
+                <button onclick="abrirModalLote()" class="bg-gray-700 text-gray-200 px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition font-medium text-sm">📥 Importar Lote</button>
+                <button onclick="abrirModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-500 transition font-medium text-sm">+ Novo Item</button>
+            </div>
+        </header>
+
+        <!-- Barra de Pesquisa -->
+        <div class="mb-6">
+            <input type="text" id="pesquisa" onkeyup="filtrarItens()" placeholder="Pesquisar por nome, texto, tipo ou local..." class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-400">
+        </div>
+
+        <!-- Lista Agrupada por Local -->
+        <div id="lista" class="space-y-6">
+            <p class="text-center text-gray-500 py-10">Carregando dados...</p>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar/Editar Individual -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-lg border border-gray-700">
+            <h2 id="modal-titulo" class="text-xl font-bold mb-4 text-gray-100">Adicionar Nova Informação</h2>
+            <input type="hidden" id="item-id">
+            
+            <label class="block text-sm font-medium text-gray-300 mb-1">Nome/Identificação (Opcional - gera automático):</label>
+            <input type="text" id="nome-input" placeholder="Ex: Credencial Servidor AWS" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
+
+            <label class="block text-sm font-medium text-gray-300 mb-1">Local / Categoria:</label>
+            <select id="local-select" onchange="verificarOutroLocal(this.value)" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
+                <option value="Pessoal">Pessoal</option>
+                <option value="BNB">BNB</option>
+                <option value="Santa Cecilia">Santa Cecilia</option>
+                <option value="outro">Outro (Digitar...)</option>
+            </select>
+            <input type="text" id="local-custom" placeholder="Digite o nome do novo local..." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 hidden">
+
+            <label class="block text-sm font-medium text-gray-300 mb-1">Conteúdo:</label>
+            <textarea id="entrada" placeholder="Cole seu texto, comando ou credencial..." class="w-full h-32 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-sm"></textarea>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
+                <button onclick="salvarItem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition font-medium">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Importação em Lote -->
+    <div id="modal-lote" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-2xl border border-gray-700">
+            <h2 class="text-xl font-bold mb-2 text-gray-100">📥 Importação em Lote</h2>
+            <p class="text-xs text-gray-400 mb-4">Cole várias notas abaixo. Cada nota deve ser separada por uma <strong>linha em branco</strong>.</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Local Padrão:</label>
+                    <select id="lote-local" class="w-full p-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100">
+                        <option value="Pessoal">Pessoal</option>
+                        <option value="BNB">BNB</option>
+                        <option value="Santa Cecilia">Santa Cecilia</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1">Prefixo do Nome (Opcional):</label>
+                    <input type="text" id="lote-nome" placeholder="Ex: Bloco - " class="w-full p-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100">
+                </div>
+            </div>
+
+            <textarea id="lote-texto" placeholder="Cole suas notas em massa aqui... Separadas por linha em branco." class="w-full h-48 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-xs"></textarea>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="fecharModalLote()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition text-sm">Cancelar</button>
+                <button onclick="processarLote()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition font-medium text-sm">Processar e Enviar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const URL_API = "https://script.google.com/macros/s/AKfycbwAN0ASxdR70CPQe4dV3QfWo2_I8J3YJBEVfrtlLYydgCKSdBPvhQLVwxodipkzF1ND/exec";
+        let itensGlobais = [];
 
-        async function salvarDado() {
-            const texto = document.getElementById('entrada').value;
-            const resDiv = document.getElementById('resultado');
-            if (!texto) return alert('Digite alguma coisa!');
+        function carregarDados() {
+            const scriptVelho = document.getElementById('jsonp-script');
+            if (scriptVelho) scriptVelho.remove();
 
-            resDiv.innerText = 'Salvando na planilha...';
+            const script = document.createElement('script');
+            script.id = 'jsonp-script';
+            script.src = `${URL_API}?action=listar&callback=processarDados`;
+            script.onerror = function() {
+                document.getElementById('lista').innerHTML = '<p class="text-center text-red-400 py-10">Erro ao carregar dados da planilha.</p>';
+            };
+            document.body.appendChild(script);
+        }
 
-            try {
-                // Usando text/plain para contornar o bloqueio de CORS do Google Apps Script
-                await fetch(URL_API, {
-                    method: 'POST',
-                    body: JSON.stringify({ texto: texto })
-                });
+        function processarDados(dados) {
+            if (dados.erro) {
+                document.getElementById('lista').innerHTML = `<p class="text-center text-red-400 py-10">Erro: ${dados.erro}</p>`;
+                return;
+            }
+            itensGlobais = dados;
+            renderizarAgrupadoPorLocal(itensGlobais);
+        }
 
-                resDiv.innerText = 'Salvo com sucesso!';
-                document.getElementById('entrada').value = '';
-            } catch (error) {
-                resDiv.innerText = 'Erro ao salvar. Verifique o console.';
-                console.error(error);
+        function renderizarAgrupadoPorLocal(itens) {
+            const listaDiv = document.getElementById('lista');
+            if (!itens || itens.length === 0) {
+                listaDiv.innerHTML = '<p class="text-center text-gray-500 py-10">Nenhum item encontrado.</p>';
+                return;
+            }
+
+            const grupos = {};
+            itens.forEach(item => {
+                const loc = item.local || 'Pessoal';
+                if (!grupos[loc]) grupos[loc] = [];
+                grupos[loc].push(item);
+            });
+
+            let html = '';
+            for (let local in grupos) {
+                const notas = grupos[local];
+                html += `
+                    <div class="bg-gray-800/40 border border-gray-700/80 rounded-2xl p-4 shadow-md">
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                            <h2 class="text-base font-bold text-indigo-300 flex items-center gap-2">
+                                📂 ${local} 
+                                <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded-full">${notas.length}</span>
+                            </h2>
+                        </div>
+                        <div class="space-y-3">
+                            ${notas.map(item => `
+                                <div class="bg-gray-800 p-3.5 rounded-xl shadow border border-gray-700/60 flex flex-col">
+                                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="alternarNota(${item.id})">
+                                        <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                            <span id="icone-${item.id}" class="text-gray-400 text-xs font-bold">▶</span>
+                                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">${item.local || 'Pessoal'}</span>
+                                            <span class="text-sm font-bold text-gray-100">${item.nome || 'Sem Nome'}</span>
+                                            <span class="text-xs font-medium px-2 py-0.5 rounded-full ${obterCorBadge(item.tipo)}">${item.tipo}</span>
+                                        </div>
+                                        <div class="space-x-3" onclick="event.stopPropagation()">
+                                            <button onclick='abrirEditar(${item.id},${JSON.stringify(item.nome)}, ${JSON.stringify(item.conteudo)},${JSON.stringify(item.local)})' class="text-indigo-400 hover:text-indigo-300 text-xs font-medium">Editar</button>
+                                            <button onclick="excluirItem(${item.id})" class="text-red-400 hover:text-red-300 text-xs font-medium">Excluir</button>
+                                        </div>
+                                    </div>
+                                    <div id="conteudo-${item.id}" class="hidden mt-3 pt-3 border-t border-gray-700/50">
+                                        <pre class="bg-gray-900/80 p-3 rounded-lg text-sm whitespace-pre-wrap font-mono text-gray-300 border border-gray-800">${item.conteudo}</pre>
+                                        <span class="text-xs text-gray-500 mt-2 block">${new Date(item.data).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            listaDiv.innerHTML = html;
+        }
+
+        function alternarNota(id) {
+            const conteudoDiv = document.getElementById(`conteudo-${id}`);
+            const iconeSpan = document.getElementById(`icone-${id}`);
+            if (conteudoDiv.classList.contains('hidden')) {
+                conteudoDiv.classList.remove('hidden');
+                iconeSpan.innerText = '▼';
+            } else {
+                conteudoDiv.classList.add('hidden');
+                iconeSpan.innerText = '▶';
             }
         }
-    </script>
-</body>
-</html>
+
+        function obterCorBadge(tipo) {
+            switch(tipo) {
+                case 'Credencial': return 'bg-rose-950 text-rose-400 border border-rose-800/50';
+                case 'Comando': return 'bg-purple-950 text-purple-400 border border-purple-800/50';
+                case 'Link': return 'bg-teal-950 text-teal-400 border border-teal-800/50';
+                default: return 'bg-blue-950 text-blue-400 border border-blue-800/50';
+            }
+        }
+
+        function filtrarItens() {
+            const termo = document.getElementById('pesquisa').value.toLowerCase();
+            const filtrados = itensGlobais.filter(item => 
+                (item.nome && item.nome.toLowerCase().includes(termo)) ||
+                (item.conteudo && item.conteudo.toLowerCase().includes(termo)) || 
+                (item.tipo && item.tipo.toLowerCase().includes(termo)) ||
+                (item.local && item.local.toLowerCase().includes(termo))
+            );
+            renderizarAgrupadoPorLocal(filtrados);
+        }
+
+        function verificarOutroLocal(valor) {
+            const inputCustom = document.getElementById('local-custom');
+            if (valor === 'outro') {
+                inputCustom.classList.remove('hidden');
+                inputCustom.focus();
+            } else {
+                inputCustom.classList.add('hidden');
+                inputCustom.value = '';
+            }
+        }
+
+        function abrirModal() {
+            document.getElementById('modal-titulo').innerText = 'Adicionar Nova Informação';
+            document.getElementById('item-id').value = '';
+            document.getElementById('nome-input').value = '';
+            document.getElementById('local-select').value = 'Pessoal';
+            document.getElementById('local-custom').value = '';
+            document.getElementById('local-custom').classList.add('hidden');
+            document.getElementById('entrada').value = '';
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function abrirEditar(id, nome, conteudo, local) {
+            document.getElementById('modal-titulo').innerText = 'Editar Informação';
+            document.getElementById('item-id').value = id;
+            document.getElementById('nome-input').value = nome || '';
+            
+            const select = document.getElementById('local-select');
+            const custom = document.getElementById('local-custom');
+            
+            if (local === 'Pessoal' || local === 'BNB' || local === 'Santa Cecilia') {
+                select.value = local;
+                custom.classList.add('hidden');
+            } else {
+                select.value = 'outro';
+                custom.classList.remove('hidden');
+                custom.value = local || '';
+            }
+
+            document.getElementById('entrada').value = conteudo;
