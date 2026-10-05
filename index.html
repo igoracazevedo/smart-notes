@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Notes - GitHub Pages</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        textarea { width: 100%; height: 150px; padding: 10px; font-size: 14px; }
+        button { background: #2ea44f; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 6px; margin-top: 10px; }
+        #resultado { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Adicionar Informação</h2>
+    <textarea id="entrada" placeholder="Cole seu texto, comando ou credencial aqui..."></textarea><br>
+    <button onclick="salvarDado()">Salvar e Identificar</button>
+    <div id="resultado"></div>
+
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbwAN0ASxdR70CPQe4dV3QfWo2_I8J3YJBEVfrtlLYydgCKSdBPvhQLVwxodipkzF1ND/exec";
+
+        async function salvarDado() {
+            const texto = document.getElementById('entrada').value;
+            const resDiv = document.getElementById('resultado');
+            if (!texto) return alert('Digite alguma coisa!');
+
+            resDiv.innerText = 'Processando e salvando...';
+
+            try {
+                await fetch(URL_API, {
+                    method: 'POST',
+                    mode: 'no-cors', // Necessário para chamadas ao Apps Script do Google
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texto: texto })
+                });
+
+                resDiv.innerText = 'Salvo com sucesso na planilha!';
+                document.getElementById('entrada').value = '';
+            } catch (error) {
+                resDiv.innerText = 'Erro ao salvar.';
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
