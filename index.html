@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Notes - Dashboard</title>
+    <title>Smart Notes - Supabase</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script> tailwind.config = { darkMode: 'class' } </script>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
@@ -18,25 +19,28 @@
             </div>
         </header>
 
+        <!-- Filtros de Tipo no Topo -->
+        <div id="resumo-tipos" class="flex flex-wrap gap-2 mb-6"></div>
+
         <!-- Barra de Pesquisa -->
         <div class="mb-6">
             <input type="text" id="pesquisa" onkeyup="filtrarItens()" placeholder="Pesquisar por nome, texto, tipo ou local..." class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-400">
         </div>
 
         <!-- Lista Agrupada por Local -->
-        <div id="lista" class="space-y-6">
-            <p class="text-center text-gray-500 py-10">Carregando dados...</p>
+        <div id="lista" class="space-y-4">
+            <p class="text-center text-gray-500 py-10">Carregando dados do Supabase...</p>
         </div>
     </div>
 
-    <!-- Modal Adicionar/Editar Individual -->
+    <!-- Modal Adicionar/Editar -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
         <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-lg border border-gray-700">
             <h2 id="modal-titulo" class="text-xl font-bold mb-4 text-gray-100">Adicionar Nova Informação</h2>
             <input type="hidden" id="item-id">
             
-            <label class="block text-sm font-medium text-gray-300 mb-1">Nome/Identificação (Opcional - gera automático):</label>
-            <input type="text" id="nome-input" placeholder="Ex: Credencial Servidor AWS" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
+            <label class="block text-sm font-medium text-gray-300 mb-1">Nome/Identificação (Opcional):</label>
+            <input type="text" id="nome-input" placeholder="Ex: Regra XML RTC" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
 
             <label class="block text-sm font-medium text-gray-300 mb-1">Local / Categoria:</label>
             <select id="local-select" onchange="verificarOutroLocal(this.value)" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
@@ -48,7 +52,7 @@
             <input type="text" id="local-custom" placeholder="Digite o nome do novo local..." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 hidden">
 
             <label class="block text-sm font-medium text-gray-300 mb-1">Conteúdo:</label>
-            <textarea id="entrada" placeholder="Cole seu texto, comando ou credencial..." class="w-full h-32 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-sm"></textarea>
+            <textarea id="entrada" placeholder="Cole seu texto, XML, comando ou credencial..." class="w-full h-32 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-sm"></textarea>
             
             <div class="flex justify-end space-x-3">
                 <button onclick="fecharModal()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
@@ -61,7 +65,7 @@
     <div id="modal-lote" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
         <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-2xl border border-gray-700">
             <h2 class="text-xl font-bold mb-2 text-gray-100">📥 Importação em Lote</h2>
-            <p class="text-xs text-gray-400 mb-4">Cole várias notas abaixo. Cada nota deve ser separada por uma <strong>linha em branco</strong>.</p>
+            <p class="text-xs text-gray-400 mb-4">Cole várias notas abaixo separadas por <strong>linha em branco</strong>.</p>
             
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div>
@@ -78,39 +82,84 @@
                 </div>
             </div>
 
-            <textarea id="lote-texto" placeholder="Cole suas notas em massa aqui... Separadas por linha em branco." class="w-full h-48 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-xs"></textarea>
+            <textarea id="lote-texto" placeholder="Cole suas notas em massa aqui..." class="w-full h-36 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-3 font-mono text-xs"></textarea>
             
+            <div id="lote-log" class="w-full h-24 p-2 bg-black border border-gray-700 rounded-lg text-xs font-mono text-emerald-400 overflow-y-auto mb-4 hidden"></div>
+
             <div class="flex justify-end space-x-3">
                 <button onclick="fecharModalLote()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition text-sm">Cancelar</button>
-                <button onclick="processarLote()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition font-medium text-sm">Processar e Enviar</button>
+                <button id="btn-processar" onclick="processarLote()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition font-medium text-sm">Processar e Enviar</button>
             </div>
         </div>
     </div>
 
     <script>
-        const URL_API = "https://script.google.com/macros/s/AKfycbwAN0ASxdR70CPQe4dV3QfWo2_I8J3YJBEVfrtlLYydgCKSdBPvhQLVwxodipkzF1ND/exec";
+        const SUPABASE_URL = "https://kslmyvlewsmjnrhwklfd.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_WjgE2b2iKdZrRopbQieW3A_Cr9R9pGB";
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let itensGlobais = [];
+        let filtroTipoAtivo = 'Todos';
 
-        function carregarDados() {
-            const scriptVelho = document.getElementById('jsonp-script');
-            if (scriptVelho) scriptVelho.remove();
+        async function carregarDados() {
+            const { data, error } = await supabaseClient
+                .from('notas')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-            const script = document.createElement('script');
-            script.id = 'jsonp-script';
-            script.src = `${URL_API}?action=listar&callback=processarDados`;
-            script.onerror = function() {
-                document.getElementById('lista').innerHTML = '<p class="text-center text-red-400 py-10">Erro ao carregar dados da planilha.</p>';
-            };
-            document.body.appendChild(script);
-        }
-
-        function processarDados(dados) {
-            if (dados.erro) {
-                document.getElementById('lista').innerHTML = `<p class="text-center text-red-400 py-10">Erro: ${dados.erro}</p>`;
+            if (error) {
+                console.error(error);
+                document.getElementById('lista').innerHTML = '<p class="text-center text-red-400 py-10">Erro ao carregar dados do Supabase: ' + error.message + '</p>';
                 return;
             }
-            itensGlobais = dados;
-            renderizarAgrupadoPorLocal(itensGlobais);
+
+            itensGlobais = data || [];
+            atualizarResumoTipos(itensGlobais);
+            aplicarFiltroEExibir();
+        }
+
+        function atualizarResumoTipos(itens) {
+            const resumoDiv = document.getElementById('resumo-tipos');
+            const contagem = { 'Total': itens.length };
+            
+            itens.forEach(item => {
+                const tipo = item.tipo || 'Anotação/Texto';
+                contagem[tipo] = (contagem[tipo] || 0) + 1;
+            });
+
+            let html = `<span class="text-xs text-gray-400 self-center mr-1 font-semibold">Tipo:</span>`;
+            html += `<button onclick="filtrarPorTipo('Todos')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${filtroTipoAtivo === 'Todos' ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">Todos (${contagem['Total']})</button>`;
+            
+            for (let tipo in contagem) {
+                if (tipo !== 'Total') {
+                    const ativo = filtroTipoAtivo === tipo;
+                    html += `<button onclick="filtrarPorTipo('${tipo}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${ativo ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">${tipo} (${contagem[tipo]})</button>`;
+                }
+            }
+            resumoDiv.innerHTML = html;
+        }
+
+        function filtrarPorTipo(tipo) {
+            filtroTipoAtivo = tipo;
+            atualizarResumoTipos(itensGlobais);
+            aplicarFiltroEExibir();
+        }
+
+        function aplicarFiltroEExibir() {
+            const termo = document.getElementById('pesquisa').value.toLowerCase();
+            
+            let filtrados = itensGlobais.filter(item => {
+                const tipoItem = item.tipo || 'Anotação/Texto';
+                const atendeTipo = (filtroTipoAtivo === 'Todos') || (tipoItem === filtroTipoAtivo);
+                const atendeBusca = !termo || 
+                    (item.nome && item.nome.toLowerCase().includes(termo)) ||
+                    (item.conteudo && item.conteudo.toLowerCase().includes(termo)) || 
+                    (item.tipo && item.tipo.toLowerCase().includes(termo)) ||
+                    (item.local && item.local.toLowerCase().includes(termo));
+                return atendeTipo && atendeBusca;
+            });
+
+            renderizarAgrupadoPorLocal(filtrados);
         }
 
         function renderizarAgrupadoPorLocal(itens) {
@@ -127,53 +176,109 @@
                 grupos[loc].push(item);
             });
 
-            let html = '';
+            listaDiv.innerHTML = '';
+            
             for (let local in grupos) {
                 const notas = grupos[local];
-                html += `
-                    <div class="bg-gray-800/40 border border-gray-700/80 rounded-2xl p-4 shadow-md">
-                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
-                            <h2 class="text-base font-bold text-indigo-300 flex items-center gap-2">
-                                📂 ${local} 
-                                <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded-full">${notas.length}</span>
-                            </h2>
-                        </div>
-                        <div class="space-y-3">
-                            ${notas.map(item => `
-                                <div class="bg-gray-800 p-3.5 rounded-xl shadow border border-gray-700/60 flex flex-col">
-                                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="alternarNota(${item.id})">
-                                        <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                                            <span id="icone-${item.id}" class="text-gray-400 text-xs font-bold">▶</span>
-                                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">${item.local || 'Pessoal'}</span>
-                                            <span class="text-sm font-bold text-gray-100">${item.nome || 'Sem Nome'}</span>
-                                            <span class="text-xs font-medium px-2 py-0.5 rounded-full ${obterCorBadge(item.tipo)}">${item.tipo}</span>
-                                        </div>
-                                        <div class="space-x-3" onclick="event.stopPropagation()">
-                                            <button onclick='abrirEditar(${item.id},${JSON.stringify(item.nome)}, ${JSON.stringify(item.conteudo)},${JSON.stringify(item.local)})' class="text-indigo-400 hover:text-indigo-300 text-xs font-medium">Editar</button>
-                                            <button onclick="excluirItem(${item.id})" class="text-red-400 hover:text-red-300 text-xs font-medium">Excluir</button>
-                                        </div>
-                                    </div>
-                                    <div id="conteudo-${item.id}" class="hidden mt-3 pt-3 border-t border-gray-700/50">
-                                        <pre class="bg-gray-900/80 p-3 rounded-lg text-sm whitespace-pre-wrap font-mono text-gray-300 border border-gray-800">${item.conteudo}</pre>
-                                        <span class="text-xs text-gray-500 mt-2 block">${new Date(item.data).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
+                const idSecao = 'secao-' + local.replace(/[^a-zA-Z0-9]/g, '-');
+                const idIconeSecao = 'icone-' + local.replace(/[^a-zA-Z0-9]/g, '-');
+                
+                const grupoDiv = document.createElement('div');
+                grupoDiv.className = 'bg-gray-800/40 border border-gray-700/80 rounded-2xl p-4 shadow-md';
+                
+                grupoDiv.innerHTML = `
+                    <div class="flex justify-between items-center cursor-pointer select-none pb-1 header-secao" onclick="alternarSecao('${idSecao}', '${idIconeSecao}')">
+                        <h2 class="text-base font-bold text-indigo-300 flex items-center gap-2">
+                            <span id="${idIconeSecao}" class="text-xs font-bold text-gray-400">▶</span>
+                            📂 ${local} 
+                            <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded-full">${notas.length}</span>
+                        </h2>
+                        <span class="text-xs text-gray-400">Clique para expandir</span>
                     </div>
+                    <div id="${idSecao}" class="hidden space-y-3 mt-3 pt-3 border-t border-gray-700/60 container-notas"></div>
                 `;
+                
+                listaDiv.appendChild(grupoDiv);
+                const containerNotas = grupoDiv.querySelector('.container-notas');
+
+                notas.forEach(item => {
+                    const notaCard = document.createElement('div');
+                    notaCard.className = 'bg-gray-800 p-3.5 rounded-xl shadow border border-gray-700/60 flex flex-col';
+                    
+                    notaCard.innerHTML = `
+                        <div class="flex justify-between items-center cursor-pointer select-none header-nota">
+                            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                <span class="icone-toggle text-gray-400 text-xs font-bold">▶</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">${item.local || 'Pessoal'}</span>
+                                <span class="text-sm font-bold text-gray-100">${item.nome || 'Sem Nome'}</span>
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full ${obterCorBadge(item.tipo)}">${item.tipo}</span>
+                            </div>
+                            <div class="acoes space-x-3">
+                                <button class="btn-copiar text-emerald-400 hover:text-emerald-300 text-xs font-medium">Copiar</button>
+                                <button class="btn-editar text-indigo-400 hover:text-indigo-300 text-xs font-medium">Editar</button>
+                                <button class="btn-excluir text-red-400 hover:text-red-300 text-xs font-medium">Excluir</button>
+                            </div>
+                        </div>
+                        <div class="conteudo-nota hidden mt-3 pt-3 border-t border-gray-700/50">
+                            <!-- Adicionado break-all e whitespace-pre-wrap para forçar links longos a quebrarem dentro da caixa -->
+                            <pre class="bg-gray-900/80 p-3 rounded-lg text-sm whitespace-pre-wrap break-all font-mono text-gray-300 border border-gray-800"></pre>
+                            <span class="text-xs text-gray-500 mt-2 block">${new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                    `;
+
+                    notaCard.querySelector('pre').textContent = item.conteudo || '';
+
+                    const header = notaCard.querySelector('.header-nota');
+                    const conteudoDiv = notaCard.querySelector('.conteudo-nota');
+                    const icone = notaCard.querySelector('.icone-toggle');
+
+                    header.addEventListener('click', () => {
+                        if (conteudoDiv.classList.contains('hidden')) {
+                            conteudoDiv.classList.remove('hidden');
+                            icone.innerText = '▼';
+                        } else {
+                            conteudoDiv.classList.add('hidden');
+                            icone.innerText = '▶';
+                        }
+                    });
+
+                    notaCard.querySelector('.btn-copiar').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(item.conteudo || '').then(() => {
+                            const btn = e.target;
+                            const originalText = btn.innerText;
+                            btn.innerText = 'Copiado! ✓';
+                            btn.classList.add('text-emerald-200');
+                            setTimeout(() => {
+                                btn.innerText = originalText;
+                                btn.classList.remove('text-emerald-200');
+                            }, 1500);
+                        });
+                    });
+
+                    notaCard.querySelector('.btn-editar').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        abrirEditar(item.id, item.nome, item.conteudo, item.local);
+                    });
+
+                    notaCard.querySelector('.btn-excluir').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        excluirItem(item.id);
+                    });
+
+                    containerNotas.appendChild(notaCard);
+                });
             }
-            listaDiv.innerHTML = html;
         }
 
-        function alternarNota(id) {
-            const conteudoDiv = document.getElementById(`conteudo-${id}`);
-            const iconeSpan = document.getElementById(`icone-${id}`);
-            if (conteudoDiv.classList.contains('hidden')) {
-                conteudoDiv.classList.remove('hidden');
+        function alternarSecao(idSecao, idIcone) {
+            const secaoDiv = document.getElementById(idSecao);
+            const iconeSpan = document.getElementById(idIcone);
+            if (secaoDiv.classList.contains('hidden')) {
+                secaoDiv.classList.remove('hidden');
                 iconeSpan.innerText = '▼';
             } else {
-                conteudoDiv.classList.add('hidden');
+                secaoDiv.classList.add('hidden');
                 iconeSpan.innerText = '▶';
             }
         }
@@ -187,26 +292,27 @@
             }
         }
 
+        function identificarTipo(texto) {
+            if (/user:|senha:|password:|login:|access_key/i.test(texto)) return "Credencial";
+            if (/^(git|npm|docker|pip|sudo|select|node|python)\s/i.test(texto) || texto.includes(";") || texto.includes("{") || texto.includes("<rule")) return "Comando";
+            if (/https?:\/\/[^\s]+/.test(texto)) return "Link";
+            return "Anotação/Texto";
+        }
+
+        function sugerirNome(texto) {
+            if (!texto) return "Nota sem título";
+            var primeiraLinha = texto.trim().split("\n")[0];
+            return primeiraLinha.length > 30 ? primeiraLinha.substring(0, 27) + "..." : primeiraLinha;
+        }
+
         function filtrarItens() {
-            const termo = document.getElementById('pesquisa').value.toLowerCase();
-            const filtrados = itensGlobais.filter(item => 
-                (item.nome && item.nome.toLowerCase().includes(termo)) ||
-                (item.conteudo && item.conteudo.toLowerCase().includes(termo)) || 
-                (item.tipo && item.tipo.toLowerCase().includes(termo)) ||
-                (item.local && item.local.toLowerCase().includes(termo))
-            );
-            renderizarAgrupadoPorLocal(filtrados);
+            aplicarFiltroEExibir();
         }
 
         function verificarOutroLocal(valor) {
             const inputCustom = document.getElementById('local-custom');
-            if (valor === 'outro') {
-                inputCustom.classList.remove('hidden');
-                inputCustom.focus();
-            } else {
-                inputCustom.classList.add('hidden');
-                inputCustom.value = '';
-            }
+            if (valor === 'outro') { inputCustom.classList.remove('hidden'); inputCustom.focus(); }
+            else { inputCustom.classList.add('hidden'); inputCustom.value = ''; }
         }
 
         function abrirModal() {
@@ -214,7 +320,6 @@
             document.getElementById('item-id').value = '';
             document.getElementById('nome-input').value = '';
             document.getElementById('local-select').value = 'Pessoal';
-            document.getElementById('local-custom').value = '';
             document.getElementById('local-custom').classList.add('hidden');
             document.getElementById('entrada').value = '';
             document.getElementById('modal').classList.remove('hidden');
@@ -224,17 +329,105 @@
             document.getElementById('modal-titulo').innerText = 'Editar Informação';
             document.getElementById('item-id').value = id;
             document.getElementById('nome-input').value = nome || '';
-            
             const select = document.getElementById('local-select');
             const custom = document.getElementById('local-custom');
-            
-            if (local === 'Pessoal' || local === 'BNB' || local === 'Santa Cecilia') {
-                select.value = local;
-                custom.classList.add('hidden');
+            if (['Pessoal', 'BNB', 'Santa Cecilia'].includes(local)) {
+                select.value = local; custom.classList.add('hidden');
             } else {
-                select.value = 'outro';
-                custom.classList.remove('hidden');
-                custom.value = local || '';
+                select.value = 'outro'; custom.classList.remove('hidden'); custom.value = local || '';
+            }
+            document.getElementById('entrada').value = conteudo || '';
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function fecharModal() { document.getElementById('modal').classList.add('hidden'); }
+        function abrirModalLote() { 
+            document.getElementById('lote-log').classList.add('hidden');
+            document.getElementById('lote-log').innerHTML = '';
+            document.getElementById('modal-lote').classList.remove('hidden'); 
+        }
+        function fecharModalLote() { document.getElementById('modal-lote').classList.add('hidden'); }
+
+        async function processarLote() {
+            const textoBruto = document.getElementById('lote-texto').value.trim();
+            const local = document.getElementById('lote-local').value;
+            const prefixoNome = document.getElementById('lote-nome').value.trim();
+            const logBox = document.getElementById('lote-log');
+            
+            if (!textoBruto) return alert('Cole algum texto para importar!');
+
+            logBox.classList.remove('hidden');
+            logBox.innerHTML = '> Iniciando processamento do lote...\n';
+
+            const blocos = textoBruto.split(/\n\s*\n/);
+            logBox.innerHTML += `> Total de blocos identificados: ${blocos.length}\n`;
+
+            const novasNotas = blocos.map((bloco, idx) => {
+                const texto = bloco.trim();
+                return {
+                    nome: prefixoNome ? `${prefixoNome} ${idx + 1}` : sugerirNome(texto),
+                    tipo: identificarTipo(texto),
+                    local: local,
+                    conteudo: texto
+                };
+            });
+
+            logBox.innerHTML += `> Enviando notas para o Supabase...\n`;
+            
+            const { data, error } = await supabaseClient.from('notas').insert(novasNotas);
+
+            if (error) {
+                logBox.innerHTML += `> ❌ ERRO DO SUPABASE: ${error.message}\n`;
+                alert('Erro ao inserir: ' + error.message);
+                return;
             }
 
-            document.getElementById('entrada').value = conteudo;
+            logBox.innerHTML += `> ✅ Sucesso! Todas as notas foram inseridas.\n`;
+            setTimeout(() => {
+                fecharModalLote();
+                document.getElementById('lote-texto').value = '';
+                carregarDados();
+            }, 1500);
+        }
+
+        async function salvarItem() {
+            const id = document.getElementById('item-id').value;
+            const nome = document.getElementById('nome-input').value.trim();
+            const texto = document.getElementById('entrada').value.trim();
+            let local = document.getElementById('local-select').value;
+            if (local === 'outro') local = document.getElementById('local-custom').value.trim() || 'Outro';
+            if (!texto) return alert('Digite algum conteúdo!');
+
+            const tipo = identificarTipo(texto);
+            const nomeFinal = nome ? nome : sugerirNome(texto);
+
+            let res;
+            if (id) {
+                res = await supabaseClient.from('notas').update({ nome: nomeFinal, tipo, local, conteudo: texto }).eq('id', id);
+            } else {
+                res = await supabaseClient.from('notas').insert([{ nome: nomeFinal, tipo, local, conteudo: texto }]);
+            }
+
+            if (res.error) {
+                alert('Erro ao salvar: ' + res.error.message);
+                return;
+            }
+
+            fecharModal();
+            carregarDados();
+        }
+
+        async function excluirItem(id) {
+            if (!confirm('Deseja realmente excluir este item?')) return;
+            const { error } = await supabaseClient.from('notas').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao excluir: ' + error.message);
+                return;
+            }
+            carregarDados();
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>
