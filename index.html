@@ -10,21 +10,21 @@
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
 
-    <div class="max-w-4xl mx-auto p-6">
-        <header class="flex justify-between items-center mb-6">
+    <div class="max-w-4xl mx-auto p-4 sm:p-6">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 class="text-2xl font-bold text-indigo-400">Smart Notes</h1>
-            <div class="space-x-2">
-                <button onclick="abrirModalLote()" class="bg-gray-700 text-gray-200 px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition font-medium text-sm">📥 Importar Lote</button>
-                <button onclick="abrirModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-500 transition font-medium text-sm">+ Novo Item</button>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <button onclick="abrirModalLote()" class="flex-1 sm:flex-none bg-gray-700 text-gray-200 px-3 py-2 rounded-lg shadow hover:bg-gray-600 transition font-medium text-xs sm:text-sm">📥 Importar Lote</button>
+                <button onclick="abrirModal()" class="flex-1 sm:flex-none bg-indigo-600 text-white px-3 py-2 rounded-lg shadow hover:bg-indigo-500 transition font-medium text-xs sm:text-sm">+ Novo Item</button>
             </div>
         </header>
 
         <!-- Filtros de Tipo no Topo -->
-        <div id="resumo-tipos" class="flex flex-wrap gap-2 mb-6"></div>
+        <div id="resumo-tipos" class="flex flex-wrap gap-1.5 sm:gap-2 mb-6"></div>
 
         <!-- Barra de Pesquisa -->
         <div class="mb-6">
-            <input type="text" id="pesquisa" onkeyup="filtrarItens()" placeholder="Pesquisar por nome, texto, tipo ou local..." class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-400">
+            <input type="text" id="pesquisa" onkeyup="filtrarItens()" placeholder="Pesquisar por nome, texto, tipo ou local..." class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-400 text-sm">
         </div>
 
         <!-- Lista Agrupada por Local -->
@@ -35,39 +35,39 @@
 
     <!-- Modal Adicionar/Editar -->
     <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-lg border border-gray-700">
+        <div class="bg-gray-800 p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-lg border border-gray-700">
             <h2 id="modal-titulo" class="text-xl font-bold mb-4 text-gray-100">Adicionar Nova Informação</h2>
             <input type="hidden" id="item-id">
             
             <label class="block text-sm font-medium text-gray-300 mb-1">Nome/Identificação (Opcional):</label>
-            <input type="text" id="nome-input" placeholder="Ex: Regra XML RTC" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
+            <input type="text" id="nome-input" placeholder="Ex: Regra XML RTC" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 text-sm">
 
             <label class="block text-sm font-medium text-gray-300 mb-1">Local / Categoria:</label>
-            <select id="local-select" onchange="verificarOutroLocal(this.value)" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3">
+            <select id="local-select" onchange="verificarOutroLocal(this.value)" class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 text-sm">
                 <option value="Pessoal">Pessoal</option>
                 <option value="BNB">BNB</option>
                 <option value="Santa Cecilia">Santa Cecilia</option>
                 <option value="outro">Outro (Digitar...)</option>
             </select>
-            <input type="text" id="local-custom" placeholder="Digite o nome do novo local..." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 hidden">
+            <input type="text" id="local-custom" placeholder="Digite o nome do novo local..." class="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 mb-3 text-sm hidden">
 
             <label class="block text-sm font-medium text-gray-300 mb-1">Conteúdo:</label>
             <textarea id="entrada" placeholder="Cole seu texto, XML, comando ou credencial..." class="w-full h-32 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-100 placeholder-gray-500 mb-4 font-mono text-sm"></textarea>
             
             <div class="flex justify-end space-x-3">
-                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">Cancelar</button>
-                <button onclick="salvarItem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition font-medium">Salvar</button>
+                <button onclick="fecharModal()" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition text-sm">Cancelar</button>
+                <button onclick="salvarItem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition font-medium text-sm">Salvar</button>
             </div>
         </div>
     </div>
 
     <!-- Modal Importação em Lote -->
     <div id="modal-lote" class="fixed inset-0 bg-black bg-opacity-70 hidden flex justify-center items-center p-4 z-50">
-        <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-2xl border border-gray-700">
+        <div class="bg-gray-800 p-5 sm:p-6 rounded-xl shadow-xl w-full max-w-2xl border border-gray-700">
             <h2 class="text-xl font-bold mb-2 text-gray-100">📥 Importação em Lote</h2>
             <p class="text-xs text-gray-400 mb-4">Cole várias notas abaixo separadas por <strong>linha em branco</strong>.</p>
             
-            <div class="grid grid-cols-2 gap-3 mb-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                     <label class="block text-xs font-medium text-gray-300 mb-1">Local Padrão:</label>
                     <select id="lote-local" class="w-full p-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100">
@@ -127,13 +127,13 @@
                 contagem[tipo] = (contagem[tipo] || 0) + 1;
             });
 
-            let html = `<span class="text-xs text-gray-400 self-center mr-1 font-semibold">Tipo:</span>`;
-            html += `<button onclick="filtrarPorTipo('Todos')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${filtroTipoAtivo === 'Todos' ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">Todos (${contagem['Total']})</button>`;
+            let html = `<span class="text-xs text-gray-400 self-center mr-1 font-semibold w-full sm:w-auto mb-1 sm:mb-0">Tipo:</span>`;
+            html += `<button onclick="filtrarPorTipo('Todos')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold ${filtroTipoAtivo === 'Todos' ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">Todos (${contagem['Total']})</button>`;
             
             for (let tipo in contagem) {
                 if (tipo !== 'Total') {
                     const ativo = filtroTipoAtivo === tipo;
-                    html += `<button onclick="filtrarPorTipo('${tipo}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${ativo ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">${tipo} (${contagem[tipo]})</button>`;
+                    html += `<button onclick="filtrarPorTipo('${tipo}')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold ${ativo ? 'bg-indigo-600 text-white shadow' : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700'} transition">${tipo} (${contagem[tipo]})</button>`;
                 }
             }
             resumoDiv.innerHTML = html;
@@ -184,16 +184,16 @@
                 const idIconeSecao = 'icone-' + local.replace(/[^a-zA-Z0-9]/g, '-');
                 
                 const grupoDiv = document.createElement('div');
-                grupoDiv.className = 'bg-gray-800/40 border border-gray-700/80 rounded-2xl p-4 shadow-md';
+                grupoDiv.className = 'bg-gray-800/40 border border-gray-700/80 rounded-2xl p-3 sm:p-4 shadow-md';
                 
                 grupoDiv.innerHTML = `
                     <div class="flex justify-between items-center cursor-pointer select-none pb-1 header-secao" onclick="alternarSecao('${idSecao}', '${idIconeSecao}')">
-                        <h2 class="text-base font-bold text-indigo-300 flex items-center gap-2">
+                        <h2 class="text-sm sm:text-base font-bold text-indigo-300 flex items-center gap-2">
                             <span id="${idIconeSecao}" class="text-xs font-bold text-gray-400">▶</span>
                             📂 ${local} 
                             <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded-full">${notas.length}</span>
                         </h2>
-                        <span class="text-xs text-gray-400">Clique para expandir</span>
+                        <span class="text-[11px] text-gray-400">Expandir</span>
                     </div>
                     <div id="${idSecao}" class="hidden space-y-3 mt-3 pt-3 border-t border-gray-700/60 container-notas"></div>
                 `;
@@ -203,26 +203,26 @@
 
                 notas.forEach(item => {
                     const notaCard = document.createElement('div');
-                    notaCard.className = 'bg-gray-800 p-3.5 rounded-xl shadow border border-gray-700/60 flex flex-col';
+                    notaCard.className = 'bg-gray-800 p-3 sm:p-3.5 rounded-xl shadow border border-gray-700/60 flex flex-col';
                     
                     notaCard.innerHTML = `
-                        <div class="flex justify-between items-center cursor-pointer select-none header-nota">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer select-none gap-2 header-nota">
                             <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                                 <span class="icone-toggle text-gray-400 text-xs font-bold">▶</span>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">${item.local || 'Pessoal'}</span>
-                                <span class="text-sm font-bold text-gray-100">${item.nome || 'Sem Nome'}</span>
-                                <span class="text-xs font-medium px-2 py-0.5 rounded-full ${obterCorBadge(item.tipo)}">${item.tipo}</span>
+                                <span class="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/50">${item.local || 'Pessoal'}</span>
+                                <span class="text-xs sm:text-sm font-bold text-gray-100">${item.nome || 'Sem Nome'}</span>
+                                <span class="text-[11px] sm:text-xs font-medium px-2 py-0.5 rounded-full ${obterCorBadge(item.tipo)}">${item.tipo}</span>
                             </div>
-                            <div class="acoes space-x-3">
-                                <button class="btn-copiar text-emerald-400 hover:text-emerald-300 text-xs font-medium">Copiar</button>
+                            <div class="acoes flex items-center space-x-3 self-end sm:self-auto mt-1 sm:mt-0">
+                                <button class="btn-copiar text-emerald-400 hover:text-emerald-300 text-xs font-medium bg-emerald-950/40 px-2 py-1 rounded border border-emerald-800/40">Copiar</button>
                                 <button class="btn-editar text-indigo-400 hover:text-indigo-300 text-xs font-medium">Editar</button>
                                 <button class="btn-excluir text-red-400 hover:text-red-300 text-xs font-medium">Excluir</button>
                             </div>
                         </div>
                         <div class="conteudo-nota hidden mt-3 pt-3 border-t border-gray-700/50">
-                            <!-- Adicionado break-all e whitespace-pre-wrap para forçar links longos a quebrarem dentro da caixa -->
-                            <pre class="bg-gray-900/80 p-3 rounded-lg text-sm whitespace-pre-wrap break-all font-mono text-gray-300 border border-gray-800"></pre>
-                            <span class="text-xs text-gray-500 mt-2 block">${new Date(item.created_at).toLocaleString()}</span>
+                            <!-- break-all garante que URLs e textos longos fiquem contidos na caixa no celular -->
+                            <pre class="bg-gray-900/80 p-3 rounded-lg text-xs sm:text-sm whitespace-pre-wrap break-all font-mono text-gray-300 border border-gray-800"></pre>
+                            <span class="text-[10px] sm:text-xs text-gray-500 mt-2 block">${new Date(item.created_at).toLocaleString()}</span>
                         </div>
                     `;
 
@@ -248,10 +248,10 @@
                             const btn = e.target;
                             const originalText = btn.innerText;
                             btn.innerText = 'Copiado! ✓';
-                            btn.classList.add('text-emerald-200');
+                            btn.classList.add('text-emerald-200', 'bg-emerald-900');
                             setTimeout(() => {
                                 btn.innerText = originalText;
-                                btn.classList.remove('text-emerald-200');
+                                btn.classList.remove('text-emerald-200', 'bg-emerald-900');
                             }, 1500);
                         });
                     });
